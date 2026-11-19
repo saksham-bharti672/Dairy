@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dairy Report</title>
+<style>
+:root{--bg:#f6f5ef;--card:#fffefb;--ink:#1f2a24;--mut:#6b756d;--line:#e1e3d8;--g:#2f6f4f;--gd:#245640;--butter:#f1d98a;--bad:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#121512;--card:#1b1f1b;--ink:#eef1ea;--mut:#9aa59c;--line:#2d332d;--g:#5fb184;--gd:#4a9a6f;--butter:#6b5a1f;--bad:#ff8a80}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:14px 14px 60px}
+h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:700;margin:0}
+h2{font-size:20px;margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+label{display:block;font-size:14px;color:var(--mut);margin:10px 0 4px}
+input,select{width:100%;padding:12px;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--g);outline-offset:1px}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:11px 16px}
+button.p{background:var(--g);border-color:var(--g);color:#fff;font-weight:600;width:100%;margin-top:14px;padding:14px}
+button.s{padding:7px 12px;font-size:14px}
+button.d{color:var(--bad)}
+button:disabled{opacity:.5}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button.on{background:var(--g);color:#fff;border-color:var(--g);font-weight:600}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0 12px}
+header small{color:var(--mut);display:block}
+nav{display:flex;gap:6px;margin-bottom:14px}
+nav button{flex:1}nav button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.slip{border:1px dashed var(--line);border-radius:12px;padding:6px 14px;margin-top:14px}
+.slip div{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);gap:8px}
+.slip div:last-child{border:0}
+.slip .tot{font-weight:700;background:var(--butter);margin:6px -14px -6px;padding:12px 14px;border-radius:0 0 11px 11px;color:#2a2200}
+.slip i{color:var(--mut);font-style:normal;font-size:13px}
+.big{font-size:22px;font-weight:700}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;white-space:nowrap}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+tfoot td{font-weight:700;background:var(--butter);color:#2a2200}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.li span small{color:var(--mut);display:block}
+.li div{display:flex;gap:6px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
+#toast.show{opacity:1}#toast.err{background:var(--bad);color:#fff}
+.hide{display:none!important}
+.err{color:var(--bad);min-height:20px;font-size:14px;margin-top:8px}
+#print{display:none}
+@media print{
+ body>*:not(#print){display:none!important}
+ body{background:#fff;color:#000}
+ #print{display:block;font-family:system-ui,sans-serif;color:#000}
+ #print h2{font-size:20px}#print p{margin:2px 0 12px;color:#444}
+ #print table{font-size:12px}#print th,#print td{border:1px solid #999;padding:5px 8px}
+ #print tfoot td{background:#eee;color:#000}
+ .pg{page-break-after:always}.pg:last-child{page-break-after:auto}
+}
+</style>
+</head>
+<body>
+<main>
+
+<section id="login" class="card" style="margin-top:8vh">
+  <h1>Dairy Report</h1>
+  <p style="color:var(--mut);margin:4px 0 8px">Doodh ka roz ka hisaab</p>
+  <label for="u">Username</label><input id="u" autocomplete="username" autocapitalize="none">
+  <label for="p">Password</label><input id="p" type="password" autocomplete="current-password">
+  <div class="err" id="le"></div>
+  <button class="p" id="lb">Login karein</button>
+</section>
+
+<section id="app" class="hide">
+  <header>
+    <div><b id="who"></b><small id="role"></small></div>
+    <div style="display:flex;gap:6px"><button class="s" id="mp">Password badlein</button><button class="s" id="lo">Logout</button></div>
+  </header>
+  <nav id="nav">
+    <button data-t="entry" class="on">Entry</button>
+    <button data-t="report">Report</button>
+    <button data-t="admin">Admin</button>
+  </nav>
+
+  <div id="entry">
+    <div class="card">
+      <h2>Naya entry</h2>
+      <label for="ef">Farmer</label><select id="ef"></select>
+      <div class="row">
+        <div><label for="ed">Date</label><input id="ed" type="date"></div>
+        <div><label>Shift</label><div class="seg" id="shift"><button data-s="Morning" class="on">Morning</button><button data-s="Evening">Evening</button></div></div>
+      </div>
+      <div class="row">
+        <div><label for="q">Quantity (litre)</label><input id="q" type="number" inputmode="decimal" min="0" step="0.01"></div>
+        <div><label for="r">Rate (Rs / litre)</label><input id="r" type="number" inputmode="decimal" min="0" step="0.01"></div>
+      </div>
+      <label for="amt">Amount (Rs) - apne aap</label><input id="amt" readonly>
+      <div class="slip" id="slip"></div>
+      <button class="p" id="sub">Entry save karein</button>
+    </div>
+  </div>
+
+  <div id="report" class="hide">
+    <div class="card">
+      <h2>Monthly report</h2>
+      <div class="row">
+        <div><label for="rm">Mahina</label><input id="rm" type="month"></div>
+        <div id="rfw"><label for="rf">Farmer</label><select id="rf"></select></div>
+      </div>
+      <button class="p" id="show">Report dikhayein</button>
+    </div>
+    <div class="card hide" id="rc">
+      <div class="tw" id="rt"></div>
+      <button class="p" id="pdf">PDF banayein (farmer-wise)</button>
+    </div>
+  </div>
+
+  <div id="admin" class="hide">
+    <div class="card">
+      <h2>Farmer jodein</h2>
+      <label for="fn">Naam</label><input id="fn">
+      <div class="row"><div><label for="fp">Phone</label><input id="fp" inputmode="tel"></div><div><label for="fw">Login password</label><input id="fw"></div></div>
+      <button class="p" id="af">Farmer jodein</button>
+    </div>
+    <div class="card"><h2>Farmers</h2><div id="fl"></div></div>
+    <div class="card">
+      <h2>Operator jodein</h2>
+      <div class="row"><div><label for="ou">Username</label><input id="ou" autocapitalize="none"></div><div><label for="on">Naam</label><input id="on"></div></div>
+      <label for="op">Password</label><input id="op">
+      <button class="p" id="ao">Operator jodein</button>
+    </div>
+    <div class="card"><h2>Operators</h2><div id="ol"></div></div>
+  </div>
+</section>
+</main>
+<div id="print"></div>
+<div id="toast"></div>
+
+<script>
+const API='https://script.google.com/macros/s/AKfycbx6hfMSz82uuiB9cCr-3JHqZ1X4SSjiMZv1LjgVcQL7M8HKSxwPfXgPPUC6__d37ro/exec';
+const DAIRY='My Milk Dairy';
+let S=null,FARMERS=[],SAVED=[],DATA=[],SH='Morning';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const f2=n=>(Math.round((+n||0)*100)/100).toFixed(2);
+const staff=()=>S&&S.role!=='farmer';
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+let tt;
+function toast(m,bad){const t=$('toast');t.textContent=m;t.className='show'+(bad?' err':'');clearTimeout(tt);tt=setTimeout(()=>t.className='',2800)}
+
+async function api(a,d={}){
+  const r=await fetch(API,{method:'POST',body:JSON.stringify({a,t:S&&S.t,...d})});
+  const j=await r.json();
+  if(!j.ok){
+    if(j.err==='SESSION'){logout();throw new Error('Session khatam ho gaya, dobara login karein')}
+    throw new Error(j.err)
+  }
+  return j
+}
+
+/* ---------- login ---------- */
+async function login(){
+  $('le').textContent='';$('lb').disabled=true;
+  try{
+    S=await api('login',{user:$('u').value,pass:$('p').value});
+    try{sessionStorage.setItem('S',JSON.stringify(S))}catch(e){}
+    start()
+  }catch(e){S=null;$('le').textContent=e.message}
+  $('lb').disabled=false
+}
+function logout(){
+  S=null;try{sessionStorage.removeItem('S')}catch(e){}
+  $('app').classList.add('hide');$('login').classList.remove('hide');$('p').value=''
+}
+async function start(){
+  $('login').classList.add('hide');$('app').classList.remove('hide');
+  $('who').textContent=S.name;$('role').textContent={admin:'Admin',operator:'Operator',farmer:'Farmer'}[S.role];
+  const st=staff();
+  document.querySelector('[data-t=entry]').classList.toggle('hide',!st);
+  document.querySelector('[data-t=admin]').classList.toggle('hide',S.role!=='admin');
+  $('rfw').classList.toggle('hide',!st);
+  $('rm').value=today().slice(0,7);$('ed').value=today();
+  try{const l=localStorage.getItem('rate');if(l)$('r').value=l}catch(e){}
+  if(st){await loadFarmers();tab('entry')}else{tab('report');loadReport()}
+}
+function tab(t){
+  ['entry','report','admin'].forEach(x=>$(x).classList.toggle('hide',x!==t));
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  if(t==='admin')renderAdmin();
+  if(t==='entry')loadDay()
+}
+
+/* ---------- farmers ---------- */
+async function loadFarmers(){
+  try{FARMERS=(await api('farmers')).list}catch(e){return toast(e.message,1)}
+  const o=FARMERS.map(f=>`<option value="${esc(f.id)}">${esc(f.name)} (${esc(f.id)})</option>`).join('');
+  const cur=$('ef').value;
+  $('ef').innerHTML=o||'<option value="">Pehle farmer jodein</option>';
+  if(cur)$('ef').value=cur;
+  $('rf').innerHTML='<option value="">Sab farmers</option>'+o
+}
+
+/* ---------- entry ---------- */
+async function loadDay(){
+  const fid=$('ef').value,date=$('ed').value;
+  SAVED=[];
+  if(fid&&date){try{SAVED=(await api('day',{fid,date})).list}catch(e){toast(e.message,1)}}
+  const x=SAVED.find(v=>v.shift===SH);
+  if(x){$('q').value=x.qty;$('r').value=x.rate}else $('q').value='';
+  calc()
+}
+function calc(){
+  const q=+$('q').value||0,r=+$('r').value||0;
+  $('amt').value=f2(q*r);
+  let tq=0,ta=0,h='';
+  ['Morning','Evening'].forEach(s=>{
+    let e=SAVED.find(v=>v.shift===s),note='';
+    if(s===SH&&$('q').value!==''){e={qty:q,amount:q*r};note=' <i>(abhi ka entry)</i>'}
+    if(e){tq+=+e.qty;ta+=+e.amount;h+=`<div><span>${s}${note}</span><span>${f2(e.qty)} L &nbsp; Rs ${f2(e.amount)}</span></div>`}
+    else h+=`<div><span>${s}</span><i>entry nahi</i></div>`
+  });
+  h+=`<div class="tot"><span>Din ka total</span><span>${f2(tq)} L &nbsp; Rs ${f2(ta)}</span></div>`;
+  $('slip').innerHTML=h
+}
+async function submit(){
+  const fid=$('ef').value,date=$('ed').value,qty=$('q').value,rate=$('r').value;
+  if(!fid||!date||qty===''||rate==='')return toast('Farmer, date, quantity aur rate bharein',1);
+  $('sub').disabled=true;
+  try{
+    const j=await api('add',{fid,date,shift:SH,qty:+qty,rate:+rate});
+    try{localStorage.setItem('rate',rate)}catch(e){}
+    toast('Save ho gaya: Rs '+f2(j.amount));
+    await loadDay()
+  }catch(e){toast(e.message,1)}
+  $('sub').disabled=false
+}
+
+/* ---------- report ---------- */
+function group(list){
+  const g={};
+  list.forEach(e=>{
+    const o=g[e.farmerId]??={id:e.farmerId,name:e.name,days:{},q:0,a:0};
+    const d=o.days[e.date]??={};d[e.shift]=e;o.q+=+e.qty;o.a+=+e.amount
+  });
+  return Object.values(g).sort((a,b)=>a.id.localeCompare(b.id))
+}
+function farmerTable(g){
+  const c=e=>e?`<td>${f2(e.qty)}</td><td>${f2(e.amount)}</td>`:'<td>-</td><td>-</td>';
+  const r=Object.keys(g.days).sort().map(d=>{
+    const M=g.days[d].Morning,E=g.days[d].Evening;
+    const q=(M?+M.qty:0)+(E?+E.qty:0),a=(M?+M.amount:0)+(E?+E.amount:0);
+    return `<tr><td>${esc(d.slice(8)+'-'+d.slice(5,7))}</td>${c(M)}${c(E)}<td>${f2(q)}</td><td>${f2(a)}</td></tr>`
+  }).join('');
+  return `<table><thead><tr><th>Date</th><th>Morning L</th><th>Rs</th><th>Evening L</th><th>Rs</th><th>Total L</th><th>Total Rs</th></tr></thead><tbody>${r}</tbody><tfoot><tr><td colspan="5">Mahine ka total</td><td>${f2(g.q)}</td><td>${f2(g.a)}</td></tr></tfoot></table>`
+}
+function summaryTable(gs){
+  const r=gs.map(g=>`<tr><td>${esc(g.name)} (${esc(g.id)})</td><td>${f2(g.q)}</td><td>${f2(g.a)}</td></tr>`).join('');
+  const q=gs.reduce((a,g)=>a+g.q,0),a=gs.reduce((s,g)=>s+g.a,0);
+  return `<table><thead><tr><th>Farmer</th><th>Total L</th><th>Total Rs</th></tr></thead><tbody>${r}</tbody><tfoot><tr><td>Sabka total</td><td>${f2(q)}</td><td>${f2(a)}</td></tr></tfoot></table>`
+}
+async function loadReport(){
+  const month=$('rm').value;
+  if(!month)return toast('Mahina chunein',1);
+  try{DATA=(await api('entries',{month,fid:staff()?$('rf').value:''})).list}catch(e){return toast(e.message,1)}
+  const gs=group(DATA);
+  $('rc').classList.remove('hide');
+  $('pdf').classList.toggle('hide',!gs.length);
+  if(!gs.length){$('rt').innerHTML='<p>Is mahine ka koi data nahi hai.</p>';return}
+  $('rt').innerHTML=(staff()&&!$('rf').value)?summaryTable(gs):farmerTable(gs[0])
+}
+function pdf(){
+  const gs=group(DATA);if(!gs.length)return;
+  const m=$('rm').value;
+  const head=t=>`<h2>${esc(DAIRY)}</h2><p>${t} - ${esc(m)}</p>`;
+  let h='';
+  if(gs.length>1)h+=`<div class="pg">${head('Sab farmers ka summary')}${summaryTable(gs)}</div>`;
+  gs.forEach(g=>{h+=`<div class="pg">${head('Farmer: '+esc(g.name)+' ('+esc(g.id)+')')}${farmerTable(g)}</div>`});
+  $('print').innerHTML=h;
+  window.print()
+}
+
+/* ---------- admin ---------- */
+async function renderAdmin(){
+  await loadFarmers();
+  $('fl').innerHTML=FARMERS.map(f=>`<div class="li"><span>${esc(f.name)}<small>Login ID: ${esc(f.id.toLowerCase())} ${f.phone?'&middot; '+esc(f.phone):''}</small></span><div><button class="s" data-a="rp" data-id="${esc(f.id.toLowerCase())}">Password</button><button class="s d" data-a="rf" data-id="${esc(f.id)}">Hatayein</button></div></div>`).join('')||'<p>Koi farmer nahi.</p>';
+  try{
+    const o=(await api('staff')).list;
+    $('ol').innerHTML=o.map(x=>`<div class="li"><span>${esc(x.name)}<small>${esc(x.username)}</small></span><div><button class="s" data-a="rp" data-id="${esc(x.username)}">Password</button><button class="s d" data-a="ro" data-id="${esc(x.username)}">Hatayein</button></div></div>`).join('')||'<p>Koi operator nahi.</p>'
+  }catch(e){toast(e.message,1)}
+}
+async function act(fn,ok){try{const j=await fn();toast(ok(j));renderAdmin()}catch(e){toast(e.message,1)}}
+
+/* ---------- events ---------- */
+$('lb').onclick=login;$('p').onkeydown=e=>{if(e.key==='Enter')login()};
+$('lo').onclick=logout;
+$('mp').onclick=()=>{const p=prompt('Naya password (kam se kam 4 akshar)');if(p)act(()=>api('myPass',{pass:p}),()=>'Password badal gaya')};
+$('nav').onclick=e=>{if(e.target.dataset.t)tab(e.target.dataset.t)};
+$('shift').onclick=e=>{const s=e.target.dataset.s;if(!s)return;SH=s;document.querySelectorAll('#shift button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));loadDay()};
+$('ef').onchange=loadDay;$('ed').onchange=loadDay;
+$('q').oninput=calc;$('r').oninput=calc;
+$('sub').onclick=submit;$('show').onclick=loadReport;$('pdf').onclick=pdf;
+$('af').onclick=()=>act(()=>api('addFarmer',{name:$('fn').value.trim(),phone:$('fp').value.trim(),pass:$('fw').value}),j=>{['fn','fp','fw'].forEach(i=>$(i).value='');return 'Farmer ban gaya. Login ID: '+j.id.toLowerCase()});
+$('ao').onclick=()=>act(()=>api('addStaff',{user:$('ou').value,name:$('on').value.trim(),pass:$('op').value}),()=>{['ou','on','op'].forEach(i=>$(i).value='');return 'Operator ban gaya'});
+$('admin').onclick=e=>{
+  const a=e.target.dataset.a,id=e.target.dataset.id;if(!a)return;
+  if(a==='rp'){const p=prompt('Naya password (kam se kam 4 akshar)');if(p)act(()=>api('resetPass',{user:id,pass:p}),()=>'Password badal gaya')}
+  if(a==='rf'&&confirm('Is farmer ko hatayein? Purana data safe rahega.'))act(()=>api('rmFarmer',{id}),()=>'Farmer hata diya')
+  if(a==='ro'&&confirm('Is operator ko hatayein?'))act(()=>api('rmStaff',{user:id}),()=>'Operator hata diya')
+};
+try{const x=sessionStorage.getItem('S');if(x){S=JSON.parse(x);start()}}catch(e){}
+</script>
+</body>
+</html>
